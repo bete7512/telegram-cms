@@ -1,3 +1,10 @@
 package main
-// https://github.com/bete7512/telegram-cms.git
-// github.com/bete7512/telegram-cms/backend
+
+import (
+	"github.com/bete7512/telegram-cms/routes"
+)
+
+func main() {
+	router := routes.Router()
+	router.Run(":8087")
+}
