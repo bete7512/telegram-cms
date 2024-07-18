@@ -6,9 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"gorm.io/gorm"
 )
 
-func Router() *gin.Engine {
+func Router(db gorm.DB) *gin.Engine {
 
 	routes := gin.Default()
 	docs.SwaggerInfo.BasePath = "/api/v1"
@@ -16,34 +17,10 @@ func Router() *gin.Engine {
 	routes.Use(middleware.Logger())
 	routes.Use(middleware.VerifyJwt())
 	v1 := routes.Group("/api/v1")
-	{
-		eg := v1.Group("/example")
-		{
-			eg.GET("/helloworld", Ping)
-		}
-	}
+	userRoutes(v1, db)
+	authRoutes(v1, db)
 	routes.GET("/docs/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 	routes.Run(":8084")
 
 	return routes
 }
-
-// PingExample godoc
-//	@Summary	ping example
-//	@Schemes
-//	@Description	do ping
-//	@Tags			example
-//	@Accept			json
-//	@Produce		json
-//	@Success		200	{string}	Helloworld
-//	@Router			/example/helloworld [get]
-func Ping(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"message": "pong",
-	})
-}
-
-
-// TODO: add addPrometheusMetrics middleware
-// TODO: add addLogger middleware
-// TODO: add addRecovery middleware

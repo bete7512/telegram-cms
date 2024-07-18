@@ -1,19 +1,152 @@
 info:
   contact: {}
 paths:
-  /example/helloworld:
-    get:
+  /change-password/{oldPassword}/{newPassword}:
+    post:
       consumes:
       - application/json
-      description: do ping
+      description: Change password
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Password updated
           schema:
             type: string
-      summary: ping example
+      summary: Change password
       tags:
-      - example
+      - Authentication
+  /forget-password/{email}:
+    post:
+      consumes:
+      - application/json
+      description: Forget password
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Email sent
+          schema:
+            type: string
+      summary: Forget password
+      tags:
+      - Authentication
+  /login/{email}/{password}:
+    post:
+      consumes:
+      - application/json
+      description: Login
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User logged in
+          schema:
+            type: string
+      summary: Login
+      tags:
+      - Authentication
+  /reset-password/{token}/{password}:
+    post:
+      consumes:
+      - application/json
+      description: Reset password
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password updated
+          schema:
+            type: string
+      summary: Reset password
+      tags:
+      - Authentication
+  /signup:
+    post:
+      consumes:
+      - application/json
+      description: Sign up
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User created
+          schema:
+            type: string
+      summary: Sign up
+      tags:
+      - Authentication
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Get all users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Get all users
+          schema:
+            type: string
+      summary: Get all users
+      tags:
+      - User
+    post:
+      consumes:
+      - application/json
+      description: Create user
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User created
+          schema:
+            type: string
+      summary: Create user
+      tags:
+      - User
+    put:
+      consumes:
+      - application/json
+      description: Update user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User updated
+          schema:
+            type: string
+      summary: Update user
+      tags:
+      - User
+  /users/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get user by id
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Get user by id
+          schema:
+            type: string
+      summary: Get user by id
+      tags:
+      - User
+  /verify-email/{token}:
+    post:
+      consumes:
+      - application/json
+      description: Verify email
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Email verified
+          schema:
+            type: string
+      summary: Verify email
+      tags:
+      - Authentication
 swagger: "2.0"
