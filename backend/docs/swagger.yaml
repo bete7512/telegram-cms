@@ -1,3 +1,40 @@
+definitions:
+  models.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  models.LoginResponse:
+    properties:
+      access_token:
+        type: string
+      user_id:
+        type: string
+    type: object
+  models.SignupRequest:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        type: string
+    type: object
+  models.SignupResponse:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+    type: object
 info:
   contact: {}
 paths:
@@ -31,18 +68,25 @@ paths:
       summary: Forget password
       tags:
       - Authentication
-  /login/{email}/{password}:
+  /login/:
     post:
       consumes:
       - application/json
       description: Login
+      parameters:
+      - description: User
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: User logged in
+          description: OK
           schema:
-            type: string
+            $ref: '#/definitions/models.LoginResponse'
       summary: Login
       tags:
       - Authentication
@@ -66,13 +110,20 @@ paths:
       consumes:
       - application/json
       description: Sign up
+      parameters:
+      - description: User
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.SignupRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: User created
+          description: OK
           schema:
-            type: string
+            $ref: '#/definitions/models.SignupResponse'
       summary: Sign up
       tags:
       - Authentication

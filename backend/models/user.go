@@ -1,11 +1,12 @@
 package models
 
 type User struct {
-	Id        string `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Email     string `json:"email"`
-	Password  string `json:"password"`
+	Id        string `json:"id" gorm:"primaryKey;autoIncrement"`
+	FirstName string `json:"first_name" gorm:"not null" `
+	LastName  string `json:"last_name" gorm:"not null" `
+	Email     string `json:"email" gorm:"unique;not null" `
+	Password  string `json:"password" gorm:"not null"`
+	Status    string `json:"status" gorm:"not null; default:'false'"`
 }
 
 type Role struct {

@@ -4,32 +4,49 @@ import (
 	"log"
 
 	"github.com/bete7512/telegram-cms/models"
+	"github.com/bete7512/telegram-cms/utils"
 )
 
-func (u *UserService) Login(email string, password string) (models.User, error) {
-	// implement here login logic
-	user, err := u.UserRepository.FindByEmail(email)
-	if err != nil {
-		return models.User{}, err
+func (u *UserService) SignUp(user models.SignupRequest) (models.User, error) {
+	password, _ := utils.HashPassword(user.Password)
+
+	userModel := models.User{
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Email:     user.Email,
+		Password:  password,
 	}
-	//TODO: implement bcrypt compare password
-	return user, nil
-}
-
-
-func (u *UserService) SignUp(user models.User) (models.User, error) {
-	// implement here signup logic
-	// TODO: implement bcrypt password
-	newUser, err := u.UserRepository.Create(user)
+	newUser, err := u.UserRepository.Create(userModel)
 	if err != nil {
 		return models.User{}, err
 	}
 	return newUser, nil
 }
 
+func (u *UserService) Login(email string, password string) (accessToken string, errr error) {
+	// implement here login logic
+	user, err := u.UserRepository.FindByEmail(email)
+	if err != nil {
+		return "", err
+	}
+	if user == (models.User{}) {
+		return "", utils.ErrUserNotFound
+	}
+
+	if !utils.ComparePassword(password, user.Password) {
+		return "", utils.ErrWrongPassword
+	}
+
+	accessToken, err = utils.GenerateJWT(user)
+	if err != nil {
+		return "", err
+	}
+	return accessToken, nil
+}
+
 func (u *UserService) ForgetPassword(email string) error {
 	// implement here forget password logic
-	user , err := u.UserRepository.FindByEmail(email)
+	user, err := u.UserRepository.FindByEmail(email)
 	if err != nil {
 		return err
 	}

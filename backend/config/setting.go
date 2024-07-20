@@ -13,12 +13,12 @@ var (
 	ENVIROMENT         string
 	SENDGRID_USER_NAME string
 	SENDER_NAME        string
-	SENDGRID_API_KEY   string
 	DB_HOST            string
 	DB_PORT            string
 	DB_USER            string
 	DB_PASSWORD        string
 	DB_NAME            string
+	SENDGRID_API_KEY   string
 )
 
 func init() {
