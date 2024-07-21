@@ -1,16 +1,16 @@
 package models
 
 type User struct {
-	Id        string `json:"id" gorm:"primaryKey;autoIncrement"`
+	Id        int `json:"id" gorm:"primaryKey;autoIncrement"`
 	FirstName string `json:"first_name" gorm:"not null" `
 	LastName  string `json:"last_name" gorm:"not null" `
 	Email     string `json:"email" gorm:"unique;not null" `
 	Password  string `json:"password" gorm:"not null"`
-	Status    string `json:"status" gorm:"not null; default:'false'"`
+	Status    bool `json:"status" gorm:"not null; default:false"`
 }
 
 type Role struct {
-	Id          string `json:"id"`
+	Id          int `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
@@ -21,7 +21,7 @@ type UserRoles struct {
 }
 
 type Permission struct {
-	Id          string `json:"id"`
+	Id          int `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }

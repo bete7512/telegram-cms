@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/bete7512/telegram-cms/models"
@@ -32,8 +33,10 @@ func (u *UserService) Login(email string, password string) (accessToken string, 
 	if user == (models.User{}) {
 		return "", utils.ErrUserNotFound
 	}
-
-	if !utils.ComparePassword(password, user.Password) {
+	if !user.Status {
+		return "", utils.ErrUserNotActive
+	}
+	if !utils.ComparePassword(user.Password, password) {
 		return "", utils.ErrWrongPassword
 	}
 
@@ -44,31 +47,92 @@ func (u *UserService) Login(email string, password string) (accessToken string, 
 	return accessToken, nil
 }
 
-func (u *UserService) ForgetPassword(email string) error {
-	// implement here forget password logic
+func (u *UserService) ForgetPassword(email string, resetLink string) error {
 	user, err := u.UserRepository.FindByEmail(email)
 	if err != nil {
 		return err
 	}
-	log.Println(user)
-	// TODO: implement  prepare token and send email
+	if user == (models.User{}) {
+		return utils.ErrUserNotFound
+	}
+	token, err := utils.GenerateForgetPasswordToken(user)
+	if err != nil {
+		return err
+	}
+
+	resetLink = fmt.Sprintf("%s?token=%s", resetLink, token)
+	err = utils.SendForgetPasswordEmail(user.FirstName, user.Email, resetLink)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (u *UserService) ResetPassword(token string, password string) error {
-	// implement here reset password logic
-	// TODO: implement something from coming token then update password
+	payload, err := utils.ValidateToken(token)
+	if err != nil {
+		return err
+	}
+
+	id := payload["id"].(float64)
+	user, err := u.UserRepository.FindByID(int(id))
+	if err != nil {
+		return err
+	}
+	if user == (models.User{}) {
+		return utils.ErrUserNotFound
+	}
+	password, _ = utils.HashPassword(password)
+	user.Password = password
+	_, err = u.UserRepository.Update(user)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (u *UserService) ChangePassword(user models.User, oldPassword string, newPassword string) error {
-	// implement here change password logic
-	// TODO: implement bcrypt compare password
+	userObj, err := u.UserRepository.FindByID(user.Id)
+	if err != nil {
+		return err
+	}
+	if userObj == (models.User{}) {
+		return utils.ErrUserNotFound
+	}
+	if !utils.ComparePassword(userObj.Password, oldPassword) {
+		return utils.ErrWrongPassword
+	}
+	password, _ := utils.HashPassword(newPassword)
+	user.Password = password
+	_, err = u.UserRepository.Update(user)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (u *UserService) VerifyEmail(token string) error {
-	// implement here verify email logic
-	// TODO: implement something here
+	payload, err := utils.ValidateToken(token)
+	log.Println("<<<<", payload)
+	if err != nil {
+		return err
+	}
+
+	id := payload["id"].(float64)
+	user, err := u.UserRepository.FindByID(int(id))
+	if err != nil {
+		return err
+	}
+	if user == (models.User{}) {
+		return utils.ErrUserNotFound
+	}
+	if user.Status {
+		return utils.ErrUserAlreadyActive
+	}
+	user.Status = true
+	_, err = u.UserRepository.Update(user)
+	if err != nil {
+		return err
+	}
 	return nil
 }

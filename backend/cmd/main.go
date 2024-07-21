@@ -10,6 +10,10 @@ import (
 	"gorm.io/gorm"
 )
 
+//	@securityDefinitions.apikey	Bearer
+//	@in							header
+//	@name						Authorization
+//	@description				Type "Bearer" followed by a space and JWT token.
 func main() {
 	host := config.DB_HOST
 	port := config.DB_PORT

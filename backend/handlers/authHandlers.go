@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/bete7512/telegram-cms/models"
 	"github.com/bete7512/telegram-cms/services"
 	"github.com/bete7512/telegram-cms/utils"
@@ -15,15 +17,15 @@ func NewAuthenticationHandlers(authenticationsService services.UserService) *Aut
 	return &AuthenticationHandlers{AuthenticationsService: authenticationsService}
 }
 
-// @Summary		Sign up
-// @Schemes		http
-// @Description	Sign up
-// @Tags			Authentication
-// @Accept			json
-// @Produce		json
-// @Param			user	body		models.SignupRequest	true	"User"
-// @Success		200		{object}	models.SignupResponse
-// @Router			/signup	[post]
+//	@Summary		Sign up
+//	@Schemes		http
+//	@Description	Sign up
+//	@Tags			Authentication
+//	@Accept			json
+//	@Produce		json
+//	@Param			user			body		models.SignupRequest	true	"User"
+//	@Success		200				{object}	models.SignupResponse
+//	@Router			/auth/signup	[post]
 func (h *AuthenticationHandlers) SignUp(ctx *gin.Context) {
 
 	var signupRequest models.SignupRequest
@@ -43,7 +45,16 @@ func (h *AuthenticationHandlers) SignUp(ctx *gin.Context) {
 		LastName:  newUser.LastName,
 		Email:     newUser.Email,
 	}
-	err = utils.SendSignupEmail(signupRequest.FirstName, newUser.Email)
+	// TODO: generate signup token
+	signup_token, err := utils.GenerateSignupToken(newUser)
+	if err != nil {
+		code, err := utils.FilterError(err)
+		ctx.JSON(code, gin.H{"error": err})
+		return
+	}
+
+	redirectUri := signupRequest.RedirectUri + "/api/v1/auth/verify-email" + "?token=" + signup_token
+	err = utils.SendSignupEmail(signupRequest.FirstName, newUser.Email, redirectUri)
 	if err != nil {
 		code, err := utils.FilterError(err)
 		ctx.JSON(code, gin.H{"error": err})
@@ -52,15 +63,15 @@ func (h *AuthenticationHandlers) SignUp(ctx *gin.Context) {
 	ctx.JSON(201, signupResponse)
 }
 
-// @Summary		Login
-// @Schemes		http
-// @Description	Login
-// @Tags			Authentication
-// @Accept			json
-// @Produce		json
-// @Param			user	body		models.LoginRequest	true	"User"
-// @Success		200							{object}	models.LoginResponse
-// @Router			/login/	[post]
+//	@Summary		Login
+//	@Schemes		http
+//	@Description	Login
+//	@Tags			Authentication
+//	@Accept			json
+//	@Produce		json
+//	@Param			user			body		models.LoginRequest	true	"User"
+//	@Success		200				{object}	models.LoginResponse
+//	@Router			/auth/login/	[post]
 func (h *AuthenticationHandlers) Login(ctx *gin.Context) {
 	var loginRequest models.LoginRequest
 	if err := ctx.ShouldBindJSON(&loginRequest); err != nil {
@@ -75,82 +86,76 @@ func (h *AuthenticationHandlers) Login(ctx *gin.Context) {
 	ctx.JSON(200, gin.H{"token": token})
 }
 
-// @Summary		Forget password
-// @Schemes		http
-// @Description	Forget password
-// @Tags			Authentication
-// @Accept			json
-// @Produce		json
-// @Success		200							{string}	message	"Email sent"
-// @Router			/forget-password/{email}	[post]
+//	@Summary		Forget password
+//	@Schemes		http
+//	@Description	Forget password
+//	@Tags			Authentication
+//	@Accept			json
+//	@Produce		json
+//	@Param			user					body		models.ForgetPasswordRequest	true	"User"
+//	@Success		200						{object}	models.ForgetPasswordResponse
+//	@Router			/auth/forget-password/	[post]
 func (h *AuthenticationHandlers) ForgetPassword(ctx *gin.Context) {
-	email := ctx.Param("email")
-	err := h.AuthenticationsService.ForgetPassword(email)
-	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
-	ctx.JSON(200, gin.H{"message": "Email sent"})
-}
-
-// @Summary		Reset password
-// @Schemes		http
-// @Description	Reset password
-// @Tags			Authentication
-// @Accept			json
-// @Produce		json
-// @Success		200									{string}	message	"Password updated"
-// @Router			/reset-password/{token}/{password}	[post]
-func (h *AuthenticationHandlers) ResetPassword(ctx *gin.Context) {
-	// TODO: implement reset password logic
-	token := ctx.Param("token")
-	password := ctx.Param("password")
-	err := h.AuthenticationsService.ResetPassword(token, password)
-	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
-	ctx.JSON(200, gin.H{"message": "Password updated"})
-}
-
-// @Summary		Change password
-// @Schemes		http
-// @Description	Change password
-// @Tags			Authentication
-// @Accept			json
-// @Produce		json
-// @Success		200												{string}	message	"Password updated"
-// @Router			/change-password/{oldPassword}/{newPassword}	[post]
-func (h *AuthenticationHandlers) ChangePassword(ctx *gin.Context) {
-	var user models.User
-	if err := ctx.ShouldBindJSON(&user); err != nil {
+	body := models.ForgetPasswordRequest{}
+	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	oldPassword := ctx.Param("oldPassword")
-	newPassword := ctx.Param("newPassword")
-	err := h.AuthenticationsService.ChangePassword(user, oldPassword, newPassword)
+	resetLink := "http://localhost:8767/auth/reset-password"
+	err := h.AuthenticationsService.ForgetPassword(body.Email, resetLink)
 	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
+		code, err := utils.FilterError(err)
+		ctx.JSON(code, gin.H{"error": err})
 		return
 	}
-	ctx.JSON(200, gin.H{"message": "Password updated"})
+	ctx.JSON(200, models.ForgetPasswordResponse{Message: "Email sent"})
 }
 
-// @Summary		Verify email
-// @Schemes		http
-// @Description	Verify email
-// @Tags			Authentication
-// @Accept			json
-// @Produce		json
-// @Success		200						{string}	message	"Email verified"
-// @Router			/verify-email/{token}	[post]
-func (h *AuthenticationHandlers) VerifyEmail(ctx *gin.Context) {
-	token := ctx.Param("token")
-	err := h.AuthenticationsService.VerifyEmail(token)
-	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
+//	@Summary		Reset password
+//	@Schemes		http
+//	@Description	Reset password
+//	@Tags			Authentication
+//	@Accept			json
+//	@Produce		json
+//	@Param			user					body		models.ResetPasswordRequest	true	"User"
+//	@Success		200						{object}	models.ResetPasswordResponse
+//	@Router			/auth/reset-password/	[post]
+func (h *AuthenticationHandlers) ResetPassword(ctx *gin.Context) {
+	resetPasswordRequest := models.ResetPasswordRequest{}
+	if err := ctx.ShouldBindJSON(&resetPasswordRequest); err != nil {
+		ctx.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(200, gin.H{"message": "Email verified"})
+
+	err := h.AuthenticationsService.ResetPassword(resetPasswordRequest.Token, resetPasswordRequest.Password)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(200, gin.H{"message": "Password updated successfully"})
+}
+
+//	@Summary		Verify email
+//	@Schemes		http
+//	@Description	Verify email
+//	@Tags			Authentication
+//	@Accept			json
+//	@Produce		json
+//	@Success		200					{string}	message	"Email verified"
+//
+//	@Param			token				query		string	true	"Verification token"
+//
+//	@Router			/auth/verify-email	[get]
+func (h *AuthenticationHandlers) VerifyEmail(ctx *gin.Context) {
+	token := ctx.Query("token")
+	err := h.AuthenticationsService.VerifyEmail(token)
+	frontendURL := "https://localhost:3000/verified"
+	if err != nil {
+		if err.Error() == utils.ErrUserAlreadyActive.Error() {
+			ctx.Redirect(http.StatusFound, frontendURL)
+		}
+		ctx.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.Redirect(http.StatusFound, frontendURL)
 }

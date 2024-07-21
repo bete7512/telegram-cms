@@ -14,6 +14,8 @@ type UserService interface {
 	ForgetPassword(email string) error
 	ResetPassword(token string, password string) error
 	ChangePassword(user models.User, oldPassword string, newPassword string) error
+	ResendSignupVerificationEmail(email string) error
+	ResendForgetPasswordEmail(email string) error
 
 }
 

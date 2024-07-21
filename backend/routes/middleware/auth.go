@@ -1,10 +1,35 @@
 package middleware
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/bete7512/telegram-cms/models"
+	"github.com/bete7512/telegram-cms/utils"
+	"github.com/gin-gonic/gin"
+)
 
-func VerifyJwt() gin.HandlerFunc {
+func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Verify JWT
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.AbortWithStatusJSON(401, gin.H{
+				"message": "Unauthorized",
+			})
+			return
+		}
+		tokenString := authHeader[len("Bearer "):]
+		user, err := utils.ValidateJwtToken(tokenString)
+		if err != nil {
+			c.AbortWithStatusJSON(401, gin.H{
+				"message": "Unauthorized",
+			})
+			return
+		}
+		if user == (models.User{}) {
+			c.AbortWithStatusJSON(401, gin.H{
+				"message": "Unauthorized",
+			})
+			return
+		}
+		c.Set("user", user)
 		c.Next()
 	}
 }

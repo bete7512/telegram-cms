@@ -15,30 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/change-password/{oldPassword}/{newPassword}": {
-            "post": {
-                "description": "Change password",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Authentication"
-                ],
-                "summary": "Change password",
-                "responses": {
-                    "200": {
-                        "description": "Password updated",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/forget-password/{email}": {
+        "/auth/forget-password/": {
             "post": {
                 "description": "Forget password",
                 "consumes": [
@@ -51,17 +28,28 @@ const docTemplate = `{
                     "Authentication"
                 ],
                 "summary": "Forget password",
+                "parameters": [
+                    {
+                        "description": "User",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ForgetPasswordRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Email sent",
+                        "description": "OK",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/models.ForgetPasswordResponse"
                         }
                     }
                 }
             }
         },
-        "/login/": {
+        "/auth/login/": {
             "post": {
                 "description": "Login",
                 "consumes": [
@@ -95,7 +83,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/reset-password/{token}/{password}": {
+        "/auth/reset-password/": {
             "post": {
                 "description": "Reset password",
                 "consumes": [
@@ -108,17 +96,28 @@ const docTemplate = `{
                     "Authentication"
                 ],
                 "summary": "Reset password",
+                "parameters": [
+                    {
+                        "description": "User",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ResetPasswordRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Password updated",
+                        "description": "OK",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/models.ResetPasswordResponse"
                         }
                     }
                 }
             }
         },
-        "/signup": {
+        "/auth/signup": {
             "post": {
                 "description": "Sign up",
                 "consumes": [
@@ -152,8 +151,84 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/verify-email": {
+            "get": {
+                "description": "Verify email",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Verify email",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Verification token",
+                        "name": "token",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Email verified",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/change-password/": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Change password",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Change password",
+                "parameters": [
+                    {
+                        "description": "User",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ChangePasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ChangePasswordResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users": {
             "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Get all users",
                 "consumes": [
                     "application/json"
@@ -167,14 +242,22 @@ const docTemplate = `{
                 "summary": "Get all users",
                 "responses": {
                     "200": {
-                        "description": "Get all users",
+                        "description": "OK",
                         "schema": {
-                            "type": "string"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.User"
+                            }
                         }
                     }
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Update user",
                 "consumes": [
                     "application/json"
@@ -196,6 +279,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Create user",
                 "consumes": [
                     "application/json"
@@ -219,6 +307,11 @@ const docTemplate = `{
         },
         "/users/{id}": {
             "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Get user by id",
                 "consumes": [
                     "application/json"
@@ -238,11 +331,9 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/verify-email/{token}": {
-            "post": {
-                "description": "Verify email",
+            },
+            "delete": {
+                "description": "Delete user",
                 "consumes": [
                     "application/json"
                 ],
@@ -250,12 +341,12 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Authentication"
+                    "User"
                 ],
-                "summary": "Verify email",
+                "summary": "Delete user",
                 "responses": {
                     "200": {
-                        "description": "Email verified",
+                        "description": "User deleted",
                         "schema": {
                             "type": "string"
                         }
@@ -265,6 +356,41 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "models.ChangePasswordRequest": {
+            "type": "object",
+            "properties": {
+                "new_password": {
+                    "type": "string"
+                },
+                "old_password": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ChangePasswordResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ForgetPasswordRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ForgetPasswordResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "models.LoginRequest": {
             "type": "object",
             "properties": {
@@ -283,6 +409,25 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.ResetPasswordRequest": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ResetPasswordResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
                     "type": "string"
                 }
             }
@@ -301,6 +446,10 @@ const docTemplate = `{
                 },
                 "password": {
                     "type": "string"
+                },
+                "redirect_uri": {
+                    "type": "string",
+                    "default": "http://localhost:8767"
                 }
             }
         },
@@ -314,12 +463,43 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "last_name": {
                     "type": "string"
                 }
             }
+        },
+        "models.User": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "boolean"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "Bearer": {
+            "description": "Type \"Bearer\" followed by a space and JWT token.",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`

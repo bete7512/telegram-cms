@@ -1,4 +1,26 @@
 definitions:
+  models.ChangePasswordRequest:
+    properties:
+      new_password:
+        type: string
+      old_password:
+        type: string
+    type: object
+  models.ChangePasswordResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  models.ForgetPasswordRequest:
+    properties:
+      email:
+        type: string
+    type: object
+  models.ForgetPasswordResponse:
+    properties:
+      message:
+        type: string
+    type: object
   models.LoginRequest:
     properties:
       email:
@@ -11,6 +33,18 @@ definitions:
       access_token:
         type: string
       user_id:
+        type: integer
+    type: object
+  models.ResetPasswordRequest:
+    properties:
+      password:
+        type: string
+      token:
+        type: string
+    type: object
+  models.ResetPasswordResponse:
+    properties:
+      message:
         type: string
     type: object
   models.SignupRequest:
@@ -23,6 +57,9 @@ definitions:
         type: string
       password:
         type: string
+      redirect_uri:
+        default: http://localhost:8767
+        type: string
     type: object
   models.SignupResponse:
     properties:
@@ -31,44 +68,51 @@ definitions:
       first_name:
         type: string
       id:
-        type: string
+        type: integer
       last_name:
         type: string
+    type: object
+  models.User:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: integer
+      last_name:
+        type: string
+      password:
+        type: string
+      status:
+        type: boolean
     type: object
 info:
   contact: {}
 paths:
-  /change-password/{oldPassword}/{newPassword}:
-    post:
-      consumes:
-      - application/json
-      description: Change password
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Password updated
-          schema:
-            type: string
-      summary: Change password
-      tags:
-      - Authentication
-  /forget-password/{email}:
+  /auth/forget-password/:
     post:
       consumes:
       - application/json
       description: Forget password
+      parameters:
+      - description: User
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.ForgetPasswordRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: Email sent
+          description: OK
           schema:
-            type: string
+            $ref: '#/definitions/models.ForgetPasswordResponse'
       summary: Forget password
       tags:
       - Authentication
-  /login/:
+  /auth/login/:
     post:
       consumes:
       - application/json
@@ -90,22 +134,29 @@ paths:
       summary: Login
       tags:
       - Authentication
-  /reset-password/{token}/{password}:
+  /auth/reset-password/:
     post:
       consumes:
       - application/json
       description: Reset password
+      parameters:
+      - description: User
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.ResetPasswordRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: Password updated
+          description: OK
           schema:
-            type: string
+            $ref: '#/definitions/models.ResetPasswordResponse'
       summary: Reset password
       tags:
       - Authentication
-  /signup:
+  /auth/signup:
     post:
       consumes:
       - application/json
@@ -127,6 +178,51 @@ paths:
       summary: Sign up
       tags:
       - Authentication
+  /auth/verify-email:
+    get:
+      consumes:
+      - application/json
+      description: Verify email
+      parameters:
+      - description: Verification token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Email verified
+          schema:
+            type: string
+      summary: Verify email
+      tags:
+      - Authentication
+  /user/change-password/:
+    post:
+      consumes:
+      - application/json
+      description: Change password
+      parameters:
+      - description: User
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ChangePasswordResponse'
+      security:
+      - Bearer: []
+      summary: Change password
+      tags:
+      - User
   /users:
     get:
       consumes:
@@ -136,9 +232,13 @@ paths:
       - application/json
       responses:
         "200":
-          description: Get all users
+          description: OK
           schema:
-            type: string
+            items:
+              $ref: '#/definitions/models.User'
+            type: array
+      security:
+      - Bearer: []
       summary: Get all users
       tags:
       - User
@@ -153,6 +253,8 @@ paths:
           description: User created
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Create user
       tags:
       - User
@@ -167,10 +269,26 @@ paths:
           description: User updated
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Update user
       tags:
       - User
   /users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User deleted
+          schema:
+            type: string
+      summary: Delete user
+      tags:
+      - User
     get:
       consumes:
       - application/json
@@ -182,22 +300,15 @@ paths:
           description: Get user by id
           schema:
             type: string
+      security:
+      - Bearer: []
       summary: Get user by id
       tags:
       - User
-  /verify-email/{token}:
-    post:
-      consumes:
-      - application/json
-      description: Verify email
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Email verified
-          schema:
-            type: string
-      summary: Verify email
-      tags:
-      - Authentication
+securityDefinitions:
+  Bearer:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

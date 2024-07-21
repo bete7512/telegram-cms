@@ -5,6 +5,8 @@ import "fmt"
 var (
 	ErrUserNotFound = fmt.Errorf("user not found")
 
+	ErrUserAlreadyActive = fmt.Errorf("user already active")
+
 	ErrUserAlreadyExists = fmt.Errorf("user already exists")
 
 	ErrUserNotActive = fmt.Errorf("user not active")
