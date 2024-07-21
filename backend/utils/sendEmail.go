@@ -34,7 +34,6 @@ func SendSignupEmail(firstName string, email string, redirectUri string) error {
         FirstName:   firstName,
         RedirectUri: redirectUri,
     }
-	log.Println(data.RedirectUri,"jjjjjjjjjjjjjjj")
     var htmlContent bytes.Buffer
     if err := t.Execute(&htmlContent, data); err != nil {
         return fmt.Errorf("failed to execute HTML template: %w", err)
@@ -63,19 +62,16 @@ func SendForgetPasswordEmail(firstName string, email string, resetLink string) e
 	from := mail.NewEmail("Telegram CMS", "betekibebe@gmail.com")
 	subject := "Forget Password"
 	to := mail.NewEmail(firstName, email)
-	// Read the HTML template file
 	htmlFile, err := ioutil.ReadFile("./statics/forget_password_template.html")
 	if err != nil {
 		return fmt.Errorf("failed to read HTML file: %w", err)
 	}
 
-	// Parse the HTML template
 	t, err := template.New("forget_password").Parse(string(htmlFile))
 	if err != nil {
 		return fmt.Errorf("failed to parse HTML template: %w", err)
 	}
 
-	// Data to be passed to the template
 	data := struct {
 		FirstName string
 		ResetLink string
@@ -84,7 +80,6 @@ func SendForgetPasswordEmail(firstName string, email string, resetLink string) e
 		ResetLink: resetLink,
 	}
 
-	// Execute the template with the data
 	var htmlContent bytes.Buffer
 	if err := t.Execute(&htmlContent, data); err != nil {
 		return fmt.Errorf("failed to execute HTML template: %w", err)
@@ -104,7 +99,7 @@ func SendForgetPasswordEmail(firstName string, email string, resetLink string) e
 		if response.StatusCode != 202 {
 			return fmt.Errorf("failed to send email")
 		}
-	}	// Data to be passed to the template
+	}
 
 	return nil
 }

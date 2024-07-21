@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/bete7512/telegram-cms/models"
 	"github.com/bete7512/telegram-cms/utils"
@@ -25,7 +24,6 @@ func (u *UserService) SignUp(user models.SignupRequest) (models.User, error) {
 }
 
 func (u *UserService) Login(email string, password string) (accessToken string, errr error) {
-	// implement here login logic
 	user, err := u.UserRepository.FindByEmail(email)
 	if err != nil {
 		return "", err
@@ -113,7 +111,6 @@ func (u *UserService) ChangePassword(user models.User, oldPassword string, newPa
 
 func (u *UserService) VerifyEmail(token string) error {
 	payload, err := utils.ValidateToken(token)
-	log.Println("<<<<", payload)
 	if err != nil {
 		return err
 	}
